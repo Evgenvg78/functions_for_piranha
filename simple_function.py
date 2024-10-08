@@ -3,7 +3,7 @@ import csv
 def simple_hello():
     print("Привет Это функция работает:)!")
 
-def simple_hello_with_csv():
+def cre_csv():
     print("Hello from GitHub with CSV!")
     data = [["Name", "Age"], ["John", "23"], ["Anna", "34"]]
     with open("output.csv", "w", newline='') as file:
