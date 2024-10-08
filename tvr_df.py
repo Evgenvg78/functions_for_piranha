@@ -13,7 +13,7 @@ def TVR_transform(TVR):
               data.append(row[:3])  # Добавляем только первые три элемента в список
 
   # Преобразуем список в DataFrame
-  df = pd.DataFrame(data, columns=['stroka', 'stolbec', 'data'])
+  df = pandas.DataFrame(data, columns=['stroka', 'stolbec', 'data'])
 
   # Изменяем тип данных на целочисленные
   df['stroka'] = df['stroka'].astype(int)
