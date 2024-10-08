@@ -1,4 +1,3 @@
-import csv
 def TVR_transform(TVR):
   with open(TVR, encoding='utf8') as file:
       separator = file.readline()[0]  # Получаем элемент, который разделяет названия колонок
