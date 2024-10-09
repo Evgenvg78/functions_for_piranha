@@ -6,7 +6,7 @@ import csv
 
 
 def TVR_transform(TVR, varyant_types, type='Go'):
-  if type = 'Go':
+  if type == 'Go':
       col_count = 'INITIALMARGIN'
   else:
       col_count = 'full_price'
