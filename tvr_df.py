@@ -5,7 +5,11 @@ import numpy as np
 import csv
 
 
-def TVR_transform(TVR, varyant_types):
+def TVR_transform(TVR, varyant_types, type='Go'):
+  if type = 'Go':
+      col_count = 'INITIALMARGIN'
+  else:
+      col_count = 'full_price'
 
   # модуль получения данных с биржи
   # загрузка данных по инструментам !!!!!! не работает вне торговой сессии !!!!
@@ -21,6 +25,7 @@ def TVR_transform(TVR, varyant_types):
 
   sec_data = pd.concat(sec_data_list, axis=0).reset_index(drop=True)
   sec_tvr = sec_data[['SECID', 'MINSTEP', 'STEPPRICE', 'PREVSETTLEPRICE', 'INITIALMARGIN', 'BUYSELLFEE', 'SCALPERFEE']]
+  sec_tvr['full_price'] = sec_tvr['PREVSETTLEPRICE'] / sec_tvr['MINSTEP'] * sec_tvr['STEPPRICE']
 
   
 
@@ -112,8 +117,8 @@ def TVR_transform(TVR, varyant_types):
   
 
   tvr_with_types = tvr_with_types.merge(sec_tvr, how='left', left_on='data', right_on='SECID') # присоединяем таблицу с ГО
-  tvr_with_types['INITIALMARGIN'] = tvr_with_types['INITIALMARGIN'].shift(2) # передвигаем цену ниже на нужную строку
-  tvr_with_types['data'] = np.where(tvr_with_types['INITIALMARGIN'] > 0, tvr_with_types['INITIALMARGIN'], tvr_with_types['data']) # вставляем ГО в структуру
+  tvr_with_types[col_count] = tvr_with_types[col_count].shift(2) # передвигаем цену ниже на нужную строку
+  tvr_with_types['data'] = np.where(tvr_with_types[col_count] > 0, tvr_with_types[col_count], tvr_with_types['data']) # вставляем ГО в структуру
 
   tvr_with_types = tvr_with_types.iloc[:, 0:3] #оставляем только нужные колонки
 
