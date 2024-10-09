@@ -5,10 +5,9 @@ from moexalgo import Market, Ticker
 
 
 def stat_df (dir,
+             tvr_with_types,
              default_comis = 0.4,
-             INSTRUMENT_TYPE = '/content/drive/MyDrive/work_data/TVR/INSTRUMENT_TYPE.csv',
-             tvr_with_types = TVR,
-
+             INSTRUMENT_TYPE = '/content/drive/MyDrive/work_data/TVR/INSTRUMENT_TYPE.csv'
              ):
   ''' Эта функция преобразует данные из папки my deals в датафрейм.
 
