@@ -163,5 +163,70 @@ def TVR_transform(TVR, varyant_types, type='Go'):
 
   return tvr_with_types
 
+def TVR_asis(TVR):
+  
+
+  
+
+  # функция преобразования 3-5 в лист [3, 4, 5]
+
+  def range_num_to_list(range_num):
+
+    result = []
+    for element in range_num.split(','):
+      split_index = element.find('-')
+      if split_index == -1:
+        result.append(int(element))
+      else:
+        start = int(element[:split_index])
+        end = int(element[split_index+1:])
+        result.extend(list(range(start, end+1)))
+
+    return result
+  
+  
+  # основной модуль
+
+
+  with open(TVR, encoding='utf8') as file:
+      separator = file.readline()[0]  # Получаем элемент, который разделяет названия колонок
+  with open(TVR, encoding='utf8') as file:
+      column_names = file.readline().strip().split(separator)[2:]  # Получаем названия колонок начиная с третьего элемента
+  data = []
+  with open(TVR, encoding='utf8') as file:
+      lines = file.readlines()[1:]  # Пропускаем первую строку с заголовками
+      reader = csv.reader(lines, delimiter=' ')
+      for row in reader:
+          if len(row) > 2:
+              row[2] = ' '.join(row[2:])  # Объединяем оставшиеся элементы в третий столбец
+              data.append(row[:3])  # Добавляем только первые три элемента в список
+
+  # Преобразуем список в DataFrame
+  df = pd.DataFrame(data, columns=['stroka', 'stolbec', 'data'])
+
+  # Изменяем тип данных на целочисленные
+  df['stroka'] = df['stroka'].astype(int)
+  df['stolbec'] = df['stolbec'].astype(int)
+
+  # создаем паттерн, чтобы все стобцы были учтены
+  stroka = [9999]*56
+  stolbec = list(range(1,57))
+  data = ['**']*56
+  pattern_dic = {'stroka': stroka, 'stolbec': stolbec, 'data':data}
+  pattern_df = pd.DataFrame(pattern_dic)
+
+  df = pd.concat([df,pattern_df])
+  df = df.replace(r'^\s*$', np.nan, regex=True)
+
+  tvr_table = df.pivot(index='stroka', columns='stolbec', values='data') # разворачиваем таблицу
+  tvr_table.columns = column_names
+  tvr_table.reset_index(inplace = True)
+  tvr_table
+
+
+
+  return tvr_table
+
+
 
 
