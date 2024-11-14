@@ -2,7 +2,7 @@ import pandas as pd
 import glob
 
 def df_union(directoty, extradel = 1):
-    files = [i for i in dire.rglob('*.csv')]
+    files = [i for i in directoty.rglob('*.csv')]
     #Создаем пустой DataFrame, который будет содержать данные из всех файлов
     df_list = []
 
