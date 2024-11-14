@@ -58,7 +58,7 @@ def union_chart(df, sostav = 'naprav', col_id=0):
     df_pivot.set_index('date_out', inplace=True)
     
     fig, ax = plt.subplots(figsize=(10, 6))
-    if col_id = 0:
+    if col_id == 0:
         col = 'tot'
     ax.plot(df_pivot.index, df_pivot[col], label=col)
     # _=ax.xticks(rotation=90)
