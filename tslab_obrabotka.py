@@ -1,7 +1,9 @@
 import pandas as pd
 import glob
+from pathlib import Path
 
 def df_union(directoty, extradel = 1):
+    directory = Path(directory)
     files = [i for i in directoty.rglob('*.csv')]
     #Создаем пустой DataFrame, который будет содержать данные из всех файлов
     df_list = []
