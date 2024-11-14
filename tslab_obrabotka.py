@@ -72,7 +72,9 @@ def union_chart(df1, sostav = 'naprav', col_id=0):
     fig, ax = plt.subplots(figsize=(10, 6))
     if col_id == 0:
         col = 'tot'
+    else:
+        col = df_pivot.columns[:-1] # сохраняем названия колонок в переменную
     ax.plot(df_pivot.index, df_pivot[col], label=col)
     # _=ax.xticks(rotation=90)
     ax.legend(loc='upper left')
-    return fig
+#     return fig
