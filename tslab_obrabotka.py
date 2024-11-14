@@ -1,9 +1,19 @@
-import pandas as pd
-import glob
 from pathlib import Path
+import pandas as pd
+import os
+import glob
+import numpy as np
+import matplotlib.pyplot as plt
+import pyodbc
+from tkinter import filedialog
+import tkinter as tk
+import seaborn as sns
+from scipy.stats import pearsonr
+
+
 
 def df_union(directoty, extradel = 1):
-    dir_path = Path(directory)
+    dir_path = Path(directoty)
     files = [i for i in dir_path.rglob('*.csv')]
     #Создаем пустой DataFrame, который будет содержать данные из всех файлов
     df_list = []
@@ -44,7 +54,7 @@ def df_union(directoty, extradel = 1):
     return df
 
 # следующий модуль - отрисовка общей эквити
-def union_chart(df, sostav = 'naprav', col_id=0):
+def union_chart(df1, sostav = 'naprav', col_id=0):
     
     df_pivot = df1.pivot_table(index='date_out',\
                                  columns=sostav,\
@@ -65,3 +75,4 @@ def union_chart(df, sostav = 'naprav', col_id=0):
     ax.plot(df_pivot.index, df_pivot[col], label=col)
     # _=ax.xticks(rotation=90)
     ax.legend(loc='upper left')
+    return fig
