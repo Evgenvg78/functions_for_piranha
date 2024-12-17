@@ -38,7 +38,9 @@ def stat_df (dir,
   #   sec_data_list.append(sec)
 
   # sec_data = pd.concat(sec_data_list, axis=0).reset_index(drop=True)
-  sec_data = pd.read_csv()
+  sec_data_file = '/content/drive/MyDrive/work_data/TVR/sec_tvr.csv'
+  sec_data = pd.read_csv(sec_tvr_file, sep=',', index_col=False)             
+  
 
   SEC_i = sec_data[['SECID', 'MINSTEP', 'STEPPRICE', 'PREVSETTLEPRICE', 'INITIALMARGIN', 'BUYSELLFEE', 'SCALPERFEE']]
   SEC_i.loc[SEC_i['SECID'].str.len()==4, 'SECID'] = SEC_i['SECID'].str[:2]
