@@ -28,16 +28,17 @@ def stat_df (dir,
 
   # загрузка дынных с биржи
 
-  forts_tickers = Market('FO').tickers()
-  sec_data_list = []
-  for i in range(len(forts_tickers)):
-    # print(i)
-    name = forts_tickers.iloc[i, 0]
-    sec = Ticker(name).info()
-    sec = sec.T
-    sec_data_list.append(sec)
+  # forts_tickers = Market('FO').tickers()
+  # sec_data_list = []
+  # for i in range(len(forts_tickers)):
+  #   # print(i)
+  #   name = forts_tickers.iloc[i, 0]
+  #   sec = Ticker(name).info()
+  #   sec = sec.T
+  #   sec_data_list.append(sec)
 
-  sec_data = pd.concat(sec_data_list, axis=0).reset_index(drop=True)
+  # sec_data = pd.concat(sec_data_list, axis=0).reset_index(drop=True)
+  sec_data = pd.read_csv()
 
   SEC_i = sec_data[['SECID', 'MINSTEP', 'STEPPRICE', 'PREVSETTLEPRICE', 'INITIALMARGIN', 'BUYSELLFEE', 'SCALPERFEE']]
   SEC_i.loc[SEC_i['SECID'].str.len()==4, 'SECID'] = SEC_i['SECID'].str[:2]
