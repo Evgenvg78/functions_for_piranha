@@ -186,6 +186,7 @@ def stat_df (dir,
                     'profit',
                     'profit_rub',
                     'script_type',
+                    'PARAMS',
                     'variant_final',
                     'total_GO'
                     ]]
