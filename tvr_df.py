@@ -163,6 +163,7 @@ def TVR_transform(TVR, varyant_types, type='Go'):
   tvr_with_types['total_GO'] = sum(abs(tvr_with_types[V_cols[i]]) * tvr_with_types[W_cols[i]] for i in range(len(V_cols)))
 
   tvr_with_types = tvr_with_types.merge(varyant_types, how = 'left', left_on='stroka', right_on='variant')
+  tvr_with_types['PARAMS'] = tvr_with_types['C'].astype(str)+'_'+ tvr_with_types['N'].astype(str)+'_'+ tvr_with_types['P'].astype(str)+'_'+ tvr_with_types['E'].astype(str)+'_'+ tvr_with_types['FrId'].astype(str)+'_'+ tvr_with_types['MoveN'].astype(str)
 
   return tvr_with_types
 
