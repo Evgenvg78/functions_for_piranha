@@ -175,6 +175,9 @@ def stat_df (dir,
   full_df['variant_final'] = np.where(full_df['variant_x'].isnull(), full_df['var_i_sec'], full_df['variant_x'])
   full_df['total_GO'] = pd.to_numeric(full_df['total_GO']).round(2)
   full_df['script_type'] = full_df['script_type'].fillna('other')
+  full_df['total_price'] = = full_df['amount_i']*full_df['PREVSETTLEPRICE']
+  full_df['total_price'] = pd.to_numeric(full_df['total_GO']).round(2)
+               
 
   full_df = full_df[['var_i',
                     'date_time_i',
