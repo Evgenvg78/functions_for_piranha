@@ -233,11 +233,9 @@ def TVR_asis(TVR):
 
 
 
-import pandas as pd
-import numpy as np
-import csv
 
-def TVR_transform(TVR, varyant_types):
+
+def TVR_transform_DS(TVR, varyant_types):
     # Загрузка данных по инструментам
     sec_data_file = '/content/drive/MyDrive/work_data/TVR/sec_tvr.csv'
     sec_data = pd.read_csv(sec_data_file, sep=',', index_col=False)
