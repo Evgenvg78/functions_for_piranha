@@ -233,11 +233,16 @@ def TVR_asis(TVR):
 
 
 
-def TVR_transform_DS(TVR, varyant_types):
+import pandas as pd
+import numpy as np
+import csv
+
+def TVR_transform(TVR, varyant_types):
     # Загрузка данных по инструментам
     sec_data_file = '/content/drive/MyDrive/work_data/TVR/sec_tvr.csv'
     sec_data = pd.read_csv(sec_data_file, sep=',', index_col=False)
-    sec_tvr = sec_data[['SECID', 'MINSTEP', 'STEPPRICE', 'PREVSETTLEPRICE', 'INITIALMARGIN', 'BUYSELLFEE', 'SCALPERFEE']]
+    sec_tvr = sec_data[['SECID', 'MINSTEP', 'STEPPRICE', 'PREVSETTLEPRICE', 
+                       'INITIALMARGIN', 'BUYSELLFEE', 'SCALPERFEE']]
     sec_tvr['full_price'] = sec_tvr['PREVSETTLEPRICE'] / sec_tvr['MINSTEP'] * sec_tvr['STEPPRICE']
 
     # Функция преобразования диапазонов
@@ -286,7 +291,8 @@ def TVR_transform_DS(TVR, varyant_types):
 
     # Создание сводной таблицы
     tvr_table = df.pivot(index='stroka', columns='stolbec', values='data')
-    tvr_table = tvr_table.reindex(columns=range(1, 57)).rename(columns=lambda x: column_names[x-1] if x-1 < len(column_names) else f'Col{x}')
+    tvr_table = tvr_table.reindex(columns=range(1, 57)).rename(
+        columns=lambda x: column_names[x-1] if x-1 < len(column_names) else f'Col{x}')
     tvr_table.reset_index(inplace=True)
 
     # Фильтрация данных
@@ -309,36 +315,67 @@ def TVR_transform_DS(TVR, varyant_types):
 
     # Объединение с данными инструментов
     merged = tvr_melt.merge(sec_tvr, how='left', left_on='data', right_on='SECID')
+    
+    # Преобразование типов и сдвиг
+    merged['INITIALMARGIN'] = pd.to_numeric(merged['INITIALMARGIN'], errors='coerce').fillna(0)
+    merged['full_price'] = pd.to_numeric(merged['full_price'], errors='coerce').fillna(0)
     merged[['INITIALMARGIN', 'full_price']] = merged[['INITIALMARGIN', 'full_price']].shift(2)
 
-    # Обработка для GO и price
+    # Функция обработки групп
     def process_group(df_group, col_name):
-        df_group['data'] = np.where(df_group[col_name] > 0, df_group[col_name], df_group['data'])
-        pivot_df = df_group.pivot(index='stroka', columns='stolbec', values='data')
+        df_group[col_name] = pd.to_numeric(df_group[col_name], errors='coerce').fillna(0)
+        df_group['data'] = np.where(
+            df_group[col_name] > 0, 
+            df_group[col_name], 
+            pd.to_numeric(df_group['data'], errors='coerce').fillna(0)
+        )
+        pivot_df = df_group.pivot_table(
+            index='stroka', 
+            columns='stolbec', 
+            values='data',
+            aggfunc='first'
+        )
         pivot_df = pivot_df.reindex(columns=col_names[1:], fill_value=0)
-        return pivot_df
+        return pivot_df.astype(float)
 
     # Расчет для обоих столбцов
     go_pivot = process_group(merged.copy(), 'INITIALMARGIN')
     price_pivot = process_group(merged.copy(), 'full_price')
 
     # Объединение результатов
-    final_df = tvr_table.merge(go_pivot, on='stroka', suffixes=('', '_GO'))
-    final_df = final_df.merge(price_pivot, on='stroka', suffixes=('', '_Price'))
+    final_df = tvr_table.merge(
+        go_pivot, 
+        on='stroka', 
+        suffixes=('', '_GO'), 
+        how='left'
+    ).merge(
+        price_pivot, 
+        on='stroka', 
+        suffixes=('', '_Price'), 
+        how='left'
+    )
 
-    # Расчет итоговых сумм
-    v_cols = [c for c in final_df.columns if c.startswith('V')]
-    w_cols = [c for c in final_df.columns if c.startswith('W')]
+    # Вычисление итоговых значений
+    v_cols = [c for c in final_df.columns if c.startswith('V') and '_' not in c]
+    w_cols = [c for c in final_df.columns if c.startswith('W') and '_' not in c]
+    
+    # Преобразование всех столбцов к числовому типу
+    for col in v_cols + w_cols:
+        final_df[col] = pd.to_numeric(final_df[col], errors='coerce').fillna(0)
 
     final_df['total_GO'] = (final_df[v_cols].abs().values * final_df[w_cols].values).sum(axis=1)
-    final_df['total_price'] = (final_df[[c for c in v_cols if '_Price' in c]].abs().values * 
-                              final_df[[c for c in w_cols if '_Price' in c]].values).sum(axis=1)
+    final_df['total_price'] = (final_df[[f'{c}_Price' for c in v_cols]].abs().values * 
+                              final_df[[f'{c}_Price' for c in w_cols]].values).sum(axis=1)
 
     # Финализация структуры
-    final_df = final_df.merge(varyant_types, left_on='stroka', right_on='variant')
+    final_df = final_df.merge(varyant_types, left_on='stroka', right_on='variant', how='left')
     final_df['PARAMS'] = final_df[['C', 'N', 'P', 'E', 'FrId', 'MoveN']].astype(str).agg('_'.join, axis=1)
     
-    return final_df[['stroka', 'total_GO', 'total_price', 'PARAMS'] + col_names]
+    # Выбор и упорядочивание колонок
+    output_cols = ['stroka', 'total_GO', 'total_price', 'PARAMS'] + \
+                 [c for c in col_names if c not in ['total_GO', 'total_price', 'PARAMS']]
+    
+    return final_df[output_cols].fillna(0)
 
 
 
