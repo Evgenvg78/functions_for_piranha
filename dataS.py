@@ -176,7 +176,7 @@ def stat_df (dir,
   full_df['total_GO'] = pd.to_numeric(full_df['total_GO']).round(2)
   full_df['script_type'] = full_df['script_type'].fillna('other')
   full_df['total_price'] = full_df['amount_i']*full_df['PREVSETTLEPRICE']
-  full_df['total_price'] = pd.to_numeric(full_df['total_GO']).round(2)
+  full_df['total_price'] = pd.to_numeric(full_df['total_price']).round(2)
                
 
   full_df = full_df[['var_i',
