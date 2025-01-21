@@ -191,8 +191,9 @@ def stat_df (dir,
                     'script_type',
                     'PARAMS',
                     'variant_final',
-                    'total_GO'
-                    ]]
+                    'total_GO',
+                     'total_price'
+                     ]]
   return full_df
 
 
