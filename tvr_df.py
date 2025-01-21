@@ -232,114 +232,116 @@ def TVR_asis(TVR):
   return tvr_table
 
 
-def TVR_transform_DS(TVR, varyant_types):
+import pandas as pd
+import numpy as np
+import csv
+
+def TVR_transform(TVR, varyant_types):
     # Загрузка данных по инструментам
     sec_data_file = '/content/drive/MyDrive/work_data/TVR/sec_tvr.csv'
     sec_data = pd.read_csv(sec_data_file, sep=',', index_col=False)
     sec_tvr = sec_data[['SECID', 'MINSTEP', 'STEPPRICE', 'PREVSETTLEPRICE', 'INITIALMARGIN', 'BUYSELLFEE', 'SCALPERFEE']]
     sec_tvr['full_price'] = sec_tvr['PREVSETTLEPRICE'] / sec_tvr['MINSTEP'] * sec_tvr['STEPPRICE']
 
-    # Функция преобразования диапазонов в список
+    # Функция преобразования диапазонов
     def range_num_to_list(range_num):
         result = []
         for element in range_num.split(','):
-            split_index = element.find('-')
-            if split_index == -1:
-                result.append(int(element))
+            if '-' in element:
+                start, end = map(int, element.split('-'))
+                result.extend(range(start, end+1))
             else:
-                start = int(element[:split_index])
-                end = int(element[split_index+1:])
-                result.extend(list(range(start, end+1)))
+                result.append(int(element))
         return result
 
-    # Преобразование типов вариантов
+    # Обработка вариантов
     varyant_types = pd.read_csv(varyant_types, sep='=', header=0)
     varyant_types['variant'] = varyant_types['variant'].apply(range_num_to_list)
     varyant_types = varyant_types.explode('variant')
 
-    # Чтение и обработка TVR данных
+    # Чтение TVR файла
     with open(TVR, encoding='utf8') as file:
         separator = file.readline()[0]
-    with open(TVR, encoding='utf8') as file:
+        file.seek(0)
         column_names = file.readline().strip().split(separator)[2:]
-    
+
     data = []
     with open(TVR, encoding='utf8') as file:
-        lines = file.readlines()[1:]
-        reader = csv.reader(lines, delimiter=' ')
+        reader = csv.reader(file, delimiter=' ')
+        next(reader)  # Пропускаем заголовок
         for row in reader:
             if len(row) > 2:
                 row[2] = ' '.join(row[2:])
                 data.append(row[:3])
 
+    # Создание основного DataFrame
     df = pd.DataFrame(data, columns=['stroka', 'stolbec', 'data'])
     df['stroka'] = df['stroka'].astype(int)
     df['stolbec'] = df['stolbec'].astype(int)
 
-    # Создание паттерна для всех столбцов
-    pattern_df = pd.DataFrame({'stroka': [9999]*56, 'stolbec': list(range(1,57)), 'data': ['**']*56})
+    # Добавление паттерна для всех столбцов
+    pattern_df = pd.DataFrame({
+        'stroka': [9999]*56,
+        'stolbec': list(range(1, 57)),
+        'data': ['**']*56
+    })
     df = pd.concat([df, pattern_df]).replace(r'^\s*$', np.nan, regex=True)
 
+    # Создание сводной таблицы
     tvr_table = df.pivot(index='stroka', columns='stolbec', values='data')
-    tvr_table.columns = column_names
+    tvr_table = tvr_table.reindex(columns=range(1, 57)).rename(columns=lambda x: column_names[x-1] if x-1 < len(column_names) else f'Col{x}')
     tvr_table.reset_index(inplace=True)
-    tvr_with_types = tvr_table
 
-    # Фильтрация активных роботов
-    condition = (tvr_with_types['Start']=='True') & (tvr_with_types['Kill all']!='True')
-    tvr_with_types = tvr_with_types[condition]
+    # Фильтрация данных
+    condition = (tvr_table['Start'] == 'True') & (tvr_table['Kill all'] != 'True')
+    tvr_with_types = tvr_table[condition].copy()
 
-    # Вставка нового столбца 'W 0'
-    tvr_with_types.insert(tvr_with_types.columns.get_loc('V 0') + 1, 'W 0', np.nan)
+    # Добавление столбца W 0
+    v0_index = tvr_with_types.columns.get_loc('V 0')
+    tvr_with_types.insert(v0_index + 1, 'W 0', np.nan)
 
     # Преобразование в длинный формат
     col_names = tvr_with_types.columns.tolist()
-    tvr_with_types.columns = ['stroka'] + list(range(1, len(tvr_with_types.columns)))
-    tvr_with_types = pd.melt(tvr_with_types, id_vars=['stroka'], var_name='stolbec', value_name='data')
-    tvr_with_types = tvr_with_types.sort_values(['stroka', 'stolbec'])
+    tvr_melt = pd.melt(
+        tvr_with_types.reset_index(),
+        id_vars=['stroka'],
+        value_vars=col_names[1:],
+        var_name='stolbec',
+        value_name='data'
+    )
 
     # Объединение с данными инструментов
-    tvr_with_types = tvr_with_types.merge(sec_tvr, how='left', left_on='data', right_on='SECID')
-    tvr_with_types['INITIALMARGIN_shifted'] = tvr_with_types['INITIALMARGIN'].shift(2)
-    tvr_with_types['full_price_shifted'] = tvr_with_types['full_price'].shift(2)
+    merged = tvr_melt.merge(sec_tvr, how='left', left_on='data', right_on='SECID')
+    merged[['INITIALMARGIN', 'full_price']] = merged[['INITIALMARGIN', 'full_price']].shift(2)
 
-    # Обработка для INITIALMARGIN (total_GO)
-    df_go = tvr_with_types.copy()
-    df_go['data'] = np.where(df_go['INITIALMARGIN_shifted'] > 0, df_go['INITIALMARGIN_shifted'], df_go['data'])
-    df_go = df_go[['stroka', 'stolbec', 'data']]
-    tvr_go = process_data(df_go, col_names, varyant_types, 'INITIALMARGIN')
+    # Обработка для GO и price
+    def process_group(df_group, col_name):
+        df_group['data'] = np.where(df_group[col_name] > 0, df_group[col_name], df_group['data'])
+        pivot_df = df_group.pivot(index='stroka', columns='stolbec', values='data')
+        pivot_df = pivot_df.reindex(columns=col_names[1:], fill_value=0)
+        return pivot_df
 
-    # Обработка для full_price (total_price)
-    df_price = tvr_with_types.copy()
-    df_price['data'] = np.where(df_price['full_price_shifted'] > 0, df_price['full_price_shifted'], df_price['data'])
-    df_price = df_price[['stroka', 'stolbec', 'data']]
-    tvr_price = process_data(df_price, col_names, varyant_types, 'full_price')
+    # Расчет для обоих столбцов
+    go_pivot = process_group(merged.copy(), 'INITIALMARGIN')
+    price_pivot = process_group(merged.copy(), 'full_price')
 
     # Объединение результатов
-    result = tvr_go.merge(tvr_price[['stroka', 'total_GO']], on='stroka', suffixes=('', '_price'))
-    result.rename(columns={'total_GO': 'total_price', 'total_GO_price': 'total_GO'}, inplace=True)
-    return result
+    final_df = tvr_table.merge(go_pivot, on='stroka', suffixes=('', '_GO'))
+    final_df = final_df.merge(price_pivot, on='stroka', suffixes=('', '_Price'))
 
-def process_data(df, col_names, varyant_types, col_type):
-    # Разворот таблицы
-    tvr_pivot = df.pivot(index='stroka', columns='stolbec', values='data')
-    tvr_pivot.columns = col_names
-    tvr_pivot.reset_index(inplace=True)
+    # Расчет итоговых сумм
+    v_cols = [c for c in final_df.columns if c.startswith('V')]
+    w_cols = [c for c in final_df.columns if c.startswith('W')]
 
-    # Добавление параметров вариантов
-    tvr_pivot = tvr_pivot.merge(varyant_types, how='left', left_on='stroka', right_on='variant')
-    tvr_pivot['PARAMS'] = tvr_pivot['C'].astype(str) + '_' + tvr_pivot['N'].astype(str) + '_' + tvr_pivot['P'].astype(str) + '_' + tvr_pivot['E'].astype(str) + '_' + tvr_pivot['FrId'].astype(str) + '_' + tvr_pivot['MoveN'].astype(str)
+    final_df['total_GO'] = (final_df[v_cols].abs().values * final_df[w_cols].values).sum(axis=1)
+    final_df['total_price'] = (final_df[[c for c in v_cols if '_Price' in c]].abs().values * 
+                              final_df[[c for c in w_cols if '_Price' in c]].values).sum(axis=1)
 
-    # Расчёт итогового значения
-    V_cols = [col for col in tvr_pivot.columns if col.startswith('V')]
-    W_cols = [col for col in tvr_pivot.columns if col.startswith('W')]
-    for col in V_cols + W_cols:
-        tvr_pivot[col] = tvr_pivot[col].fillna(0).astype(int)
-    dtype_dict = {col: int for col in V_cols}
-    tvr_pivot = tvr_pivot.astype(dtype_dict)
-    tvr_pivot['total_GO'] = sum(abs(tvr_pivot[V_cols[i]]) * tvr_pivot[W_cols[i]] for i in range(len(V_cols)))
-
-    return tvr_pivot
+    # Финализация структуры
+    final_df = final_df.merge(varyant_types, left_on='stroka', right_on='variant')
+    final_df['PARAMS'] = final_df[['C', 'N', 'P', 'E', 'FrId', 'MoveN']].astype(str).agg('_'.join, axis=1)
+    
+    return final_df[['stroka', 'total_GO', 'total_price', 'PARAMS'] + col_names]
 
 
 
