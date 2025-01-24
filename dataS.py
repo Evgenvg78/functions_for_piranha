@@ -24,9 +24,7 @@ def stat_df (dir,
 
 
   '''
-  dir  = glob.glob(dir)
-
-  
+   
 
   # загрузка дынных с биржи
 
@@ -50,11 +48,26 @@ def stat_df (dir,
   SEC_i.rename(columns={'SECID': 'CODE'}, inplace=True)
 
 
-  files = []
-  for deal in dir:
-    add = pd.read_csv(deal, sep=';', header=None)
-    files.append(add)
-  df = pd.concat(files, ignore_index=True)
+  files = glob.glob(dir)
+
+  if not files:
+      raise FileNotFoundError(f"Файлы по шаблону '{udin_dir}' не найдены.")
+  
+  # Чтение и объединение файлов с обработкой ошибок
+  df_list = []
+  for file in files:
+      try:
+          df = pd.read_csv(file, sep=';', header=None, encoding='utf-8')
+          df_list.append(df)
+      except Exception as e:
+          print(f"Ошибка при чтении файла '{file}': {e}")
+  
+  if df_list:
+      df = pd.concat(df_list, ignore_index=True)
+      print("Файлы успешно объединены.")
+      print(df.head())
+  else:
+      print("Нет данных для объединения.")
 
   # изменяем структуру данных
 
