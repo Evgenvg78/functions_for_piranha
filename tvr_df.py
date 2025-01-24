@@ -5,7 +5,7 @@ import numpy as np
 import csv
 
 
-def TVR_transform(TVR, varyant_types, type='Go'):
+def TVR_transform(TVR, varyant_types, type='Go', sec_data_file = '/content/drive/MyDrive/work_data/TVR/sec_tvr.csv'):
   if type == 'Go':
       col_count = 'INITIALMARGIN'
   else:
@@ -22,7 +22,7 @@ def TVR_transform(TVR, varyant_types, type='Go'):
   #   sec = Ticker(name).info()
   #   sec = sec.T
   #   sec_data_list.append(sec)
-  sec_data_file = '/content/drive/MyDrive/work_data/TVR/sec_tvr.csv'
+  # sec_data_file = '/content/drive/MyDrive/work_data/TVR/sec_tvr.csv'
   sec_data = pd.read_csv(sec_data_file, sep=',', index_col=False)
   # sec_data = pd.concat(sec_data_list, axis=0).reset_index(drop=True)
   sec_tvr = sec_data[['SECID', 'MINSTEP', 'STEPPRICE', 'PREVSETTLEPRICE', 'INITIALMARGIN', 'BUYSELLFEE', 'SCALPERFEE']]
