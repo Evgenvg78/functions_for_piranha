@@ -7,7 +7,8 @@ from moexalgo import Market, Ticker
 def stat_df (dir,
              tvr_with_types,
              default_comis = 0.4,
-             INSTRUMENT_TYPE = '/content/drive/MyDrive/work_data/TVR/INSTRUMENT_TYPE.csv'
+             INSTRUMENT_TYPE = '/content/drive/MyDrive/work_data/TVR/INSTRUMENT_TYPE.csv',
+             sec_data_file = '/content/drive/MyDrive/work_data/TVR/sec_tvr.csv'
              ):
   ''' Эта функция преобразует данные из папки my deals в датафрейм.
 
@@ -17,6 +18,7 @@ def stat_df (dir,
     INSTRUMENT_TYPE: ссылка на файл с указанием типов комиссия биржи (индекс, фонд, валюта, товар).
     
     tvr_with_types: ссылка на TVR (обработанный файл TVR).
+    sec_data_file: ссылка на файл с данными по инструментам
   Returns:
     df: датафрейм с обработанными данными, где каждая строка это сделка - вход, выход, доходность и т.д.
 
@@ -38,7 +40,7 @@ def stat_df (dir,
   #   sec_data_list.append(sec)
 
   # sec_data = pd.concat(sec_data_list, axis=0).reset_index(drop=True)
-  sec_data_file = '/content/drive/MyDrive/work_data/TVR/sec_tvr.csv'
+  # sec_data_file = '/content/drive/MyDrive/work_data/TVR/sec_tvr.csv'
   sec_data = pd.read_csv(sec_data_file, sep=',', index_col=False)             
   
 
