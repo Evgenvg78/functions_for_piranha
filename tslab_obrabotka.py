@@ -54,7 +54,7 @@ def df_union(directoty, extradel = 1):
     return df
 
 # следующий модуль - отрисовка общей эквити
-def union_chart(df1, sostav = 'naprav', col_id=0):
+def union_chart(df1, sostav = 'naprav', col_id=0, size = (10, 6)):
     
     df_pivot = df1.pivot_table(index='date_out',\
                                  columns=sostav,\
@@ -69,7 +69,7 @@ def union_chart(df1, sostav = 'naprav', col_id=0):
     df_pivot = df_pivot.reset_index()
     df_pivot.set_index('date_out', inplace=True)
     
-    fig, ax = plt.subplots(figsize=(10, 6))
+    fig, ax = plt.subplots(figsize=size)
     if col_id == 0:
         col = 'tot'
     else:
