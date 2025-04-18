@@ -178,6 +178,7 @@ def stat_df_open (dir,
                        'variant_final',
                        'total_GO',
                        'total_price'
+                       'trade_status'
                        ]]
     return full_df
 
