@@ -177,7 +177,7 @@ def stat_df_open (dir,
                        'PARAMS',
                        'variant_final',
                        'total_GO',
-                       'total_price'
+                       'total_price',
                        'trade_status'
                        ]]
     return full_df
